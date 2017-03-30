@@ -14,10 +14,54 @@
 
 mat4 projectionMatrix;
 
-Model* GenerateTerrain(TextureData *tex, float scale, int offset, int x0, int z0)
+void generateArrays(GLfloat *vertexArray, GLfloat *normalArray, GLfloat *texCoordArray, TextureData *tex, int x0, int z0, float scale, int offset){
+	int width = 512;
+	int x, z;
+	for (x = x0; x < x0 + tex->width; x++)
+		for (z = z0; z < z0 + tex->height; z++)
+		{
+// Vertex array. You need to scale this properly
+			vertexArray[(x + z * width)*3 + 0] = x / 1.0;
+			vertexArray[(x + z * width)*3 + 1] = (tex->imageData[(x + z * width) * (tex->bpp/8)] / scale) + offset;
+			vertexArray[(x + z * width)*3 + 2] = z / 1.0;
+// Normal vectors. You need to calculate these.
+
+			if( x > 1 && z > 1 )
+			{
+				float vx1 = vertexArray[((x) + z * width)*3 + 0];
+				float vx2 = vertexArray[((x-1) + z * width)*3 + 0];
+				float vx3 = vertexArray[((x-1) + (z-1) * width)*3 + 0];
+				float vy1 = vertexArray[((x) + z * width)*3 + 1];
+				float vy2 = vertexArray[((x-1) + z * width)*3 + 1];
+				float vy3 = vertexArray[((x-1) + (z-1) * width)*3 + 1];
+				float vz1 = vertexArray[((x) + z * width)*3 + 2];
+				float vz2 = vertexArray[((x-1) + z * width)*3 + 2];
+				float vz3 = vertexArray[((x-1) + (z-1) * width)*3 + 2];
+
+				vec3 v1 = SetVector(vx1 - vx2, vy1 - vy2, vz1 - vz2);
+				vec3 v2 = SetVector(vx3 - vx2, vy3 - vy2, vz3 - vz2);
+				//vec3 v3 = SetVector(vx2 - vx3, vy2 - vy3, vz2 - vz3);
+				vec3 normal = CrossProduct(v1,v2);
+				normalArray[(x + z * width)*3 + 0] = normal.x;
+				normalArray[(x + z * width)*3 + 1] = normal.y;
+				normalArray[(x + z * width)*3 + 2] = normal.z;
+			}
+			else
+			{
+				normalArray[(x + z * width)*3 + 0] = 0.0;
+				normalArray[(x + z * width)*3 + 1] = 1.0;
+				normalArray[(x + z * width)*3 + 2] = 0.0;
+			}
+// Texture coordinates. You may want to scale them.
+			texCoordArray[(x + z * width)*2 + 0] = (float)x / width * 100.0; // x
+			texCoordArray[(x + z * width)*2 + 1] = (float)z / width *  100.0; // y
+		}
+}
+
+Model* GenerateTerrain(TextureData *tex, TextureData *tex2, TextureData *tex3, TextureData *tex4)
 {
-	int vertexCount = tex->width * tex->height;
-	int triangleCount = (tex->width-1) * (tex->height-1) * 2;
+	int vertexCount = tex->width*2 * tex->height*2;
+	int triangleCount = (tex->width*2-1) * (tex->height*2-1) * 2;
 	int x, z;
 
 	GLfloat *vertexArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
@@ -27,56 +71,22 @@ Model* GenerateTerrain(TextureData *tex, float scale, int offset, int x0, int z0
 
 	printf("bpp %d\n", tex->bpp);
 	printf("texture width = (%d,%f), height =(%d,%f)\n",tex->width,tex->texWidth,tex->height,tex->texHeight);
-	for (x = x0; x < x0 + tex->width; x++)
-		for (z = z0; z < z0 + tex->height; z++)
-		{
-// Vertex array. You need to scale this properly
-			vertexArray[(x + z * tex->width)*3 + 0] = x / 1.0;
-			vertexArray[(x + z * tex->width)*3 + 1] = (tex->imageData[(x + z * tex->width) * (tex->bpp/8)] / scale) + offset;
-			vertexArray[(x + z * tex->width)*3 + 2] = z / 1.0;
-// Normal vectors. You need to calculate these.
+	generateArrays(&vertexArray, &normalArray, &texCoordArray, &tex, 0, 0, 5.0, 0);
+	generateArrays(&vertexArray, &normalArray, &texCoordArray, &tex2, 256, 0, 5.0, 0);
+	generateArrays(&vertexArray, &normalArray, &texCoordArray, &tex3, 0, 256, 5.0, 0);
+	generateArrays(&vertexArray, &normalArray, &texCoordArray, &tex4, 256, 256, 5.0, 0);
 
-			if( x > 1 && z > 1 )
-			{
-				float vx1 = vertexArray[((x) + z * tex->width)*3 + 0];
-				float vx2 = vertexArray[((x-1) + z * tex->width)*3 + 0];
-				float vx3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 0];
-				float vy1 = vertexArray[((x) + z * tex->width)*3 + 1];
-				float vy2 = vertexArray[((x-1) + z * tex->width)*3 + 1];
-				float vy3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 1];
-				float vz1 = vertexArray[((x) + z * tex->width)*3 + 2];
-				float vz2 = vertexArray[((x-1) + z * tex->width)*3 + 2];
-				float vz3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 2];
-
-				vec3 v1 = SetVector(vx1 - vx2, vy1 - vy2, vz1 - vz2);
-				vec3 v2 = SetVector(vx3 - vx2, vy3 - vy2, vz3 - vz2);
-				//vec3 v3 = SetVector(vx2 - vx3, vy2 - vy3, vz2 - vz3);
-				vec3 normal = CrossProduct(v1,v2);
-				normalArray[(x + z * tex->width)*3 + 0] = normal.x;
-				normalArray[(x + z * tex->width)*3 + 1] = normal.y;
-				normalArray[(x + z * tex->width)*3 + 2] = normal.z;
-			}
-			else
-			{
-				normalArray[(x + z * tex->width)*3 + 0] = 0.0;
-				normalArray[(x + z * tex->width)*3 + 1] = 1.0;
-				normalArray[(x + z * tex->width)*3 + 2] = 0.0;
-			}
-// Texture coordinates. You may want to scale them.
-			texCoordArray[(x + z * tex->width)*2 + 0] = (float)x / tex->width * 100.0; // x
-			texCoordArray[(x + z * tex->width)*2 + 1] = (float)z / tex->height *  100.0; // y
-		}
-	for (x = 0; x < tex->width-1; x++)
-		for (z = 0; z < tex->height-1; z++)
+	for (x = 0; x < tex->width*2-1; x++)
+		for (z = 0; z < tex->height*2-1; z++)
 		{
 		// Triangle 1
-			indexArray[(x + z * (tex->width-1))*6 + 0] = x + z * tex->width;
-			indexArray[(x + z * (tex->width-1))*6 + 1] = x + (z+1) * tex->width;
-			indexArray[(x + z * (tex->width-1))*6 + 2] = x+1 + z * tex->width;
+			indexArray[(x + z * (tex->width*2-1))*6 + 0] = x + z * tex->width*2;
+			indexArray[(x + z * (tex->width*2-1))*6 + 1] = x + (z+1) * tex->width*2;
+			indexArray[(x + z * (tex->width*2-1))*6 + 2] = x+1 + z * tex->width*2;
 		// Triangle 2
-			indexArray[(x + z * (tex->width-1))*6 + 3] = x+1 + z * tex->width;
-			indexArray[(x + z * (tex->width-1))*6 + 4] = x + (z+1) * tex->width;
-			indexArray[(x + z * (tex->width-1))*6 + 5] = x+1 + (z+1) * tex->width;
+			indexArray[(x + z * (tex->width*2-1))*6 + 3] = x+1 + z * tex->width*2;
+			indexArray[(x + z * (tex->width*2-1))*6 + 4] = x + (z+1) * tex->width*2;
+			indexArray[(x + z * (tex->width*2-1))*6 + 5] = x+1 + (z+1) * tex->width*2;
 		}
 	// Normal vectors
 
