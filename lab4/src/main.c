@@ -13,85 +13,11 @@
 #include "camera.h"
 
 mat4 projectionMatrix;
-GLfloat *conv(GLfloat *A, GLfloat *B, int lenA, int lenB)
+
+Model* GenerateTerrain(TextureData *tex, TextureData *scaling, TextureData *waterhole)
 {
-	int nconv;
-	int i, j, i1;
-	GLfloat tmp;
-	GLfloat *C;
-
-	//allocated convolution array
-	nconv = lenA+lenB-1;
-	C = (GLfloat*) calloc(nconv, sizeof(GLfloat));
-
-	//convolution process
-	for (i=0; i<nconv; i++)
-	{
-		i1 = i;
-		tmp = 0.0;
-		for (j=0; j<lenB; j++)
-		{
-			if(i1>=0 && i1<lenA)
-				tmp = tmp + (A[i1]*B[j]);
-
-			i1 = i1-1;
-			C[i] = tmp;
-		}
-	}
-
-
-	//return convolution array
-	return(C);
-}
-
-
-void generateArrays(GLfloat *vertexArray, GLfloat *normalArray, GLfloat *texCoordArray, TextureData *tex, int x0, int z0, float scale, int offset){
-	int width = 512;
-	int x, z;
-	for (x = x0; x < x0 + tex->width; x++)
-		for (z = z0; z < z0 + tex->height; z++)
-		{
-			// Vertex array. You need to scale this properly
-			vertexArray[(x + z * width)*3 + 0] = x / 1.0;
-			vertexArray[(x + z * width)*3 + 1] = (tex->imageData[(x + z * tex->width) * (tex->bpp/8)] / scale) + offset;
-			vertexArray[(x + z * width)*3 + 2] = z / 1.0;
-			// Normal vectors. You need to calculate these.
-			if( x > 1 && z > 1 )
-			{
-				float vx1 = vertexArray[((x) + z * width)*3 + 0];
-				float vx2 = vertexArray[((x-1) + z * width)*3 + 0];
-				float vx3 = vertexArray[((x-1) + (z-1) * width)*3 + 0];
-				float vy1 = vertexArray[((x) + z * width)*3 + 1];
-				float vy2 = vertexArray[((x-1) + z * width)*3 + 1];
-				float vy3 = vertexArray[((x-1) + (z-1) * width)*3 + 1];
-				float vz1 = vertexArray[((x) + z * width)*3 + 2];
-				float vz2 = vertexArray[((x-1) + z * width)*3 + 2];
-				float vz3 = vertexArray[((x-1) + (z-1) * width)*3 + 2];
-
-				vec3 v1 = SetVector(vx1 - vx2, vy1 - vy2, vz1 - vz2);
-				vec3 v2 = SetVector(vx3 - vx2, vy3 - vy2, vz3 - vz2);
-				//vec3 v3 = SetVector(vx2 - vx3, vy2 - vy3, vz2 - vz3);
-				vec3 normal = CrossProduct(v1,v2);
-				normalArray[(x + z * width)*3 + 0] = normal.x;
-				normalArray[(x + z * width)*3 + 1] = normal.y;
-				normalArray[(x + z * width)*3 + 2] = normal.z;
-			}
-			else
-			{
-				normalArray[(x + z * width)*3 + 0] = 0.0;
-				normalArray[(x + z * width)*3 + 1] = 1.0;
-				normalArray[(x + z * width)*3 + 2] = 0.0;
-			}
-			// Texture coordinates. You may want to scale them.
-			texCoordArray[(x + z * width)*2 + 0] = (float)x / width * 100.0; // x
-			texCoordArray[(x + z * width)*2 + 1] = (float)z / width *  100.0; // y
-		}
-}
-
-Model* GenerateTerrain(TextureData *tex, TextureData *tex2, TextureData *tex3, TextureData *tex4)
-{
-	int vertexCount = tex->width*2 * tex->height*2;
-	int triangleCount = (tex->width*2-1) * (tex->height*2-1) * 2;
+	int vertexCount = tex->width * tex->height;
+	int triangleCount = (tex->width-1) * (tex->height-1) * 2;
 	int x, z;
 
 	GLfloat *vertexArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
@@ -99,64 +25,56 @@ Model* GenerateTerrain(TextureData *tex, TextureData *tex2, TextureData *tex3, T
 	GLfloat *texCoordArray = malloc(sizeof(GLfloat) * 2 * vertexCount);
 	GLuint *indexArray = malloc(sizeof(GLuint) * triangleCount*3);
 
-	printf("bpp %d\n", tex->bpp);
-	printf("texture width = (%d,%f), height =(%d,%f)\n",tex->width,tex->texWidth,tex->height,tex->texHeight);
-	generateArrays(vertexArray, normalArray, texCoordArray, tex, 0, 0, 5.0, 0);
-	generateArrays(vertexArray, normalArray, texCoordArray, tex2, 256, 0, 10.0, 0);
-	generateArrays(vertexArray, normalArray, texCoordArray, tex3, 0, 256, 15.0, 0);
-	generateArrays(vertexArray, normalArray, texCoordArray, tex4, 256, 256, 20.0, 0);
-	//printf("%s\n","after");
-
-	GLfloat *tempArray = malloc(sizeof(GLfloat) * 20);
-	GLfloat *convArr = malloc(sizeof(GLfloat) * 20);
-	convArr[0] = 1.0/110;
-	convArr[1] = 2.0/110;
-	convArr[2] = 3.0/110;
-	convArr[3] = 4.0/110;
-	convArr[4] = 5.0/110;
-	convArr[5] = 6.0/110;
-	convArr[6] = 7.0/110;
-	convArr[7] = 8.0/110;
-	convArr[8] = 9.0/110;
-	convArr[9] = 10.0/110;
-	convArr[10] = 10.0/110;
-	convArr[11] = 9.0/110;
-	convArr[12] = 8.0/110;
-	convArr[13] = 7.0/110;
-	convArr[14] = 6.0/110;
-	convArr[15] = 5.0/110;
-	convArr[16] = 4.0/110;
-	convArr[17] = 3.0/110;
-	convArr[18] = 2.0/110;
-	convArr[19] = 1.0/110;
-
-	for (x = 0; x < 246; x++)
-	{
-		for (z = 0; z < 20; z++) {
-			tempArray[z] = vertexArray[(x+(246+z)*512) * 3 + 1];
-		}
-
-		GLfloat *g = conv(tempArray, convArr, 20, 20);
-		int i;
-
-			for (z = 0; z < 20; z++) {
-				vertexArray[(x + (246+z)*512)*3 + 1] = g[z+10];
-			}
-	}
-
-
-
-	for (x = 0; x < tex->width*2-1; x++)
-		for (z = 0; z < tex->height*2-1; z++)
+	for (x = 0; x < tex->width; x++)
+		for (z = 0; z < tex->height; z++)
 		{
-			// Triangle 1
-			indexArray[(x + z * (tex->width*2-1))*6 + 0] = x + z * tex->width*2;
-			indexArray[(x + z * (tex->width*2-1))*6 + 1] = x + (z+1) * tex->width*2;
-			indexArray[(x + z * (tex->width*2-1))*6 + 2] = x+1 + z * tex->width*2;
-			// Triangle 2
-			indexArray[(x + z * (tex->width*2-1))*6 + 3] = x+1 + z * tex->width*2;
-			indexArray[(x + z * (tex->width*2-1))*6 + 4] = x + (z+1) * tex->width*2;
-			indexArray[(x + z * (tex->width*2-1))*6 + 5] = x+1 + (z+1) * tex->width*2;
+			// Vertex array. You need to scale this properly
+			vertexArray[(x + z * tex->width)*3 + 0] = x / 1.0;
+			vertexArray[(x + z * tex->width)*3 + 1] = (tex->imageData[(x + z * tex->width) * (tex->bpp/8)] - waterhole->imageData[(x + z * tex->width) * (tex->bpp/8)]) / (GLfloat)(scaling->imageData[(x + z * tex->width)]/25.0);
+			vertexArray[(x + z * tex->width)*3 + 2] = z / 1.0;
+			// Normal vectors. You need to calculate these.
+
+			if( x > 1 && z > 1 )
+			{
+				float vx1 = vertexArray[((x) + z * tex->width)*3 + 0];
+				float vx2 = vertexArray[((x-1) + z * tex->width)*3 + 0];
+				float vx3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 0];
+				float vy1 = vertexArray[((x) + z * tex->width)*3 + 1];
+				float vy2 = vertexArray[((x-1) + z * tex->width)*3 + 1];
+				float vy3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 1];
+				float vz1 = vertexArray[((x) + z * tex->width)*3 + 2];
+				float vz2 = vertexArray[((x-1) + z * tex->width)*3 + 2];
+				float vz3 = vertexArray[((x-1) + (z-1) * tex->width)*3 + 2];
+
+				vec3 v1 = SetVector(vx1 - vx2, vy1 - vy2, vz1 - vz2);
+				vec3 v2 = SetVector(vx3 - vx2, vy3 - vy2, vz3 - vz2);
+				//vec3 v3 = SetVector(vx2 - vx3, vy2 - vy3, vz2 - vz3);
+				vec3 normal = CrossProduct(v1,v2);
+				normalArray[(x + z * tex->width)*3 + 0] = normal.x;
+				normalArray[(x + z * tex->width)*3 + 1] = normal.y;
+				normalArray[(x + z * tex->width)*3 + 2] = normal.z;
+			}
+			else
+			{
+				normalArray[(x + z * tex->width)*3 + 0] = 0.0;
+				normalArray[(x + z * tex->width)*3 + 1] = 1.0;
+				normalArray[(x + z * tex->width)*3 + 2] = 0.0;
+			}
+// Texture coordinates. You may want to scale them.
+			texCoordArray[(x + z * tex->width)*2 + 0] = (float)x / tex->width * 100.0; // x
+			texCoordArray[(x + z * tex->width)*2 + 1] = (float)z / tex->height *  100.0; // y
+		}
+	for (x = 0; x < tex->width-1; x++)
+		for (z = 0; z < tex->height-1; z++)
+		{
+		// Triangle 1
+			indexArray[(x + z * (tex->width-1))*6 + 0] = x + z * tex->width;
+			indexArray[(x + z * (tex->width-1))*6 + 1] = x + (z+1) * tex->width;
+			indexArray[(x + z * (tex->width-1))*6 + 2] = x+1 + z * tex->width;
+		// Triangle 2
+			indexArray[(x + z * (tex->width-1))*6 + 3] = x+1 + z * tex->width;
+			indexArray[(x + z * (tex->width-1))*6 + 4] = x + (z+1) * tex->width;
+			indexArray[(x + z * (tex->width-1))*6 + 5] = x+1 + (z+1) * tex->width;
 		}
 	// Normal vectors
 
@@ -187,32 +105,32 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 	GLfloat *texCoordArray = malloc(sizeof(GLfloat) * 2 * vertexCount);
 	GLuint *indexArray = malloc(sizeof(GLuint) * triangleCount*3);
 
-	printf("bpp %d\n", tex->bpp);
-	printf("texture width = (%d,%f), height =(%d,%f)\n",tex->width,tex->texWidth,tex->height,tex->texHeight);
+	//printf("bpp %d\n", tex->bpp);
+	//printf("texture width = (%d,%f), height =(%d,%f)\n",tex->width,tex->texWidth,tex->height,tex->texHeight);
 	for (x = 0; x < tex->width; x++)
 		for (z = 0; z < tex->height; z++)
 		{
-			// Vertex array. You need to scale this properly
+// Vertex array. You need to scale this properly
 			vertexArray[(x + z * tex->width)*3 + 0] = x / 1.0;
 			vertexArray[(x + z * tex->width)*3 + 1] = waterLevel;
 			vertexArray[(x + z * tex->width)*3 + 2] = z / 1.0;
-			// Normal vectors. You need to calculate these.
+// Normal vectors. You need to calculate these.
 			normalArray[(x + z * tex->width)*3 + 0] = 0.0;
 			normalArray[(x + z * tex->width)*3 + 1] = 1.0;
 			normalArray[(x + z * tex->width)*3 + 2] = 0.0;
 
-			// Texture coordinates. You may want to scale them.
+// Texture coordinates. You may want to scale them.
 			texCoordArray[(x + z * tex->width)*2 + 0] = (float)x / tex->width * 100.0; // x
 			texCoordArray[(x + z * tex->width)*2 + 1] = (float)z / tex->height *  100.0; // y
 		}
 	for (x = 0; x < tex->width-1; x++)
 		for (z = 0; z < tex->height-1; z++)
 		{
-			// Triangle 1
+		// Triangle 1
 			indexArray[(x + z * (tex->width-1))*6 + 0] = x + z * tex->width;
 			indexArray[(x + z * (tex->width-1))*6 + 1] = x + (z+1) * tex->width;
 			indexArray[(x + z * (tex->width-1))*6 + 2] = x+1 + z * tex->width;
-			// Triangle 2
+		// Triangle 2
 			indexArray[(x + z * (tex->width-1))*6 + 3] = x+1 + z * tex->width;
 			indexArray[(x + z * (tex->width-1))*6 + 4] = x + (z+1) * tex->width;
 			indexArray[(x + z * (tex->width-1))*6 + 5] = x+1 + (z+1) * tex->width;
@@ -242,9 +160,8 @@ Model *m, *m2, *tm, *water;
 GLuint program, ball, waterProgram;
 GLuint tex1, tex2;
 TextureData ttex; // terrain
-TextureData ttex2;
-TextureData ttex3;
-TextureData ttex4;
+TextureData scale;
+TextureData waterhole;
 float mouseX, mouseY;
 float moveZ, moveX;
 Camera camera;
@@ -368,20 +285,19 @@ void mouseCallback(int mx, int my) {
 void init(void)
 {
 	// Load terrain data
-	LoadTGATextureData("textures/t1-up.tga", &ttex2);
-	LoadTGATextureData("textures/t2-up.tga", &ttex3);
-	LoadTGATextureData("textures/t3-up.tga", &ttex4);
 
-	LoadTGATextureData("textures/t4-up.tga", &ttex);
+	LoadTGATextureData("textures/t4-1024.tga", &ttex);
 
-	tm = GenerateTerrain(&ttex, &ttex2, &ttex3, &ttex4);
-	//printf("%d\n", tm);
+	LoadTGATextureData("textures/scale_matrix.tga", &scale);
+	LoadTGATextureData("textures/waterhole.tga", &waterhole);
+
+	tm = GenerateTerrain(&ttex, &scale, &waterhole);
 	water = GenerateWater(&ttex, 3.0);
 	printError("init terrain");
 
 	// Init Camera
 	camera = newCamera();
-	camera.pos = SetVector(ttex.width/2,5,ttex.height/2);
+	camera.pos = SetVector(800,5,800);
 	camera.yaw = M_PI / 4;
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
@@ -458,7 +374,7 @@ void display(void)
 	modelView = Mult(T(x,y,z), S(2,2,2));
 	total = Mult(camMatrix, modelView); // Mult(camMatrix, modelView);
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
-	//DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
+	DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
 
 	// draw water
 	glUseProgram(waterProgram);
