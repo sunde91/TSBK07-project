@@ -156,9 +156,15 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 
 // vertex array object
 Model *m, *m2, *tm, *water;
+Model * skybox;
 // Reference to shader program
-GLuint program, ball, waterProgram;
+GLuint program, waterProgram;
+GLuint skyboxShader;
 GLuint tex1, tex2;
+GLuint skyboxTexObjID;
+vec4 skyboxOffset;
+mat4 skyboxCameraMatrix;
+unsigned int vertexArrayObjID;
 TextureData ttex; // terrain
 TextureData scale;
 TextureData waterhole;
@@ -305,6 +311,7 @@ void init(void)
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glGenVertexArrays(1, &vertexArrayObjID);
 
 	printError("GL inits");
 
@@ -312,8 +319,9 @@ void init(void)
 
 	// Load and compile shader
 	program = loadShaders("shaders/terrain.vert", "shaders/terrain.frag");
-	ball = loadShaders("shaders/ball.vert", "shaders/ball.frag");
+	//ball = loadShaders("shaders/ball.vert", "shaders/ball.frag");
 	waterProgram = loadShaders("shaders/water.vert", "shaders/water.frag");
+	skyboxShader = loadShaders("shaders/skybox2.vert","shaders/skybox2.frag");
 	glUseProgram(program);
 	printError("init shader");
 
@@ -322,15 +330,31 @@ void init(void)
 	LoadTGATextureSimple("textures/grass.tga", &tex1);
 	printError("program shader");
 
-	glUseProgram(ball);
-	glUniformMatrix4fv(glGetUniformLocation(ball, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	m2 = createObject("models/groundsphere.obj");
+	glUseProgram(skyboxShader);
+	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	m2 = createObject("models/skybox.obj");
+	CenterModel(m2);
+
 	//glUniform1i(glGetUniformLocation(ball, "tex"), 0); // Texture unit 0
 	printError("ball shader");
 
 	glUseProgram(waterProgram);
 	glUniformMatrix4fv(glGetUniformLocation(waterProgram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	printError("water shader");
+
+	/*
+	glUseProgram(skyboxShader);
+	skybox = createObject("models/skybox.obj");
+	
+	CenterModel(skybox);
+    //init_object(vertexArrayObjID, skybox, skyboxShader);
+    */
+    LoadTGATextureSimple("textures/SkyBox512.tga", &skyboxTexObjID);
+    skyboxOffset.x = 0;
+    skyboxOffset.y = -0.2;
+    skyboxOffset.z = 0;
+    //glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+    
 
 }
 
@@ -353,8 +377,19 @@ void display(void)
 	updateCameraStuff();
 	mat4 total, modelView, camMatrix;
 
+	glBindTexture(GL_TEXTURE_2D, skyboxTexObjID);
+	glUseProgram(skyboxShader);
+	skyboxCameraMatrix = camera.matrix;
+    skyboxCameraMatrix.m[3] = skyboxOffset.x;
+    skyboxCameraMatrix.m[4 + 3] = skyboxOffset.y;
+    skyboxCameraMatrix.m[8 + 3] = skyboxOffset.z;
+   // glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
+	
+	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
+	DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
+	glClear(GL_DEPTH_BUFFER_BIT);
 	printError("pre display");
-
+	
 	// Build matrix
 	glUseProgram(program);
 	camMatrix = camera.matrix;
@@ -366,15 +401,7 @@ void display(void)
 	DrawModel(tm, program, "inPosition", "inNormal", "inTexCoord");
 	printError("display 1");
 
-	// draw ball
-	glUseProgram(ball);
-	float x = camera.pos.x + sin(camera.yaw)*10;
-	float z = camera.pos.z - cos(camera.yaw)*10;
-	float y = getHeightExact(tm, &ttex, x,z);
-	modelView = Mult(T(x,y,z), S(2,2,2));
-	total = Mult(camMatrix, modelView); // Mult(camMatrix, modelView);
-	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
-	DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
+
 
 	// draw water
 	glUseProgram(waterProgram);

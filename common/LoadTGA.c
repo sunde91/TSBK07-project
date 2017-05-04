@@ -189,14 +189,15 @@ bool LoadTGATextureData(char *filename, TextureData *texture)	// Loads A TGA Fil
 		} while (i < imageSize);
 	}
 
-	for (i = 0; i < (int)(imageSize); i += bytesPerPixel)	// Loop Through The Image Data
-	{		// Swaps The 1st And 3rd Bytes ('R'ed and 'B'lue)
-		temp = texture->imageData[i];		// Temporarily Store The Value At Image Data 'i'
-		texture->imageData[i] = texture->imageData[i + 2];	// Set The 1st Byte To The Value Of The 3rd Byte
-		texture->imageData[i + 2] = temp;	// Set The 3rd Byte To The Value In 'temp' (1st Byte Value)
+	if(bytesPerPixel > 1){
+		for (i = 0; i < (int)(imageSize); i += bytesPerPixel)	// Loop Through The Image Data
+		{		// Swaps The 1st And 3rd Bytes ('R'ed and 'B'lue)
+			temp = texture->imageData[i];		// Temporarily Store The Value At Image Data 'i'
+			texture->imageData[i] = texture->imageData[i + 2];	// Set The 1st Byte To The Value Of The 3rd Byte
+			texture->imageData[i + 2] = temp;	// Set The 3rd Byte To The Value In 'temp' (1st Byte Value)
+		}
 	}
 	fclose (file);
-
 texture->w = w;
 texture->h = h;
 
