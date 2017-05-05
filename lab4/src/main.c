@@ -61,8 +61,8 @@ Model* GenerateTerrain(TextureData *tex, TextureData *scaling, TextureData *wate
 				normalArray[(x + z * tex->width)*3 + 2] = 0.0;
 			}
 // Texture coordinates. You may want to scale them.
-			texCoordArray[(x + z * tex->width)*2 + 0] = (float)x / tex->width * 100.0; // x
-			texCoordArray[(x + z * tex->width)*2 + 1] = (float)z / tex->height *  100.0; // y
+			texCoordArray[(x + z * tex->width)*2 + 0] = (float)x / tex->width * 200.0; // x
+			texCoordArray[(x + z * tex->width)*2 + 1] = (float)z / tex->height *  200.0; // y
 		}
 	for (x = 0; x < tex->width-1; x++)
 		for (z = 0; z < tex->height-1; z++)
@@ -160,7 +160,7 @@ Model * skybox;
 // Reference to shader program
 GLuint program, waterProgram;
 GLuint skyboxShader;
-GLuint tex1, tex2;
+GLuint grassTex, sandTex, forestTex, mountainTex,snowTex;
 GLuint skyboxTexObjID;
 vec4 skyboxOffset;
 mat4 skyboxCameraMatrix;
@@ -303,7 +303,7 @@ void init(void)
 
 	// Init Camera
 	camera = newCamera();
-	camera.pos = SetVector(800,5,800);
+	camera.pos = SetVector(100,5,100);
 	camera.yaw = M_PI / 4;
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
@@ -326,9 +326,24 @@ void init(void)
 	printError("init shader");
 
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	glUniform1i(glGetUniformLocation(program, "tex"), 0); // Texture unit 0
-	LoadTGATextureSimple("textures/grass.tga", &tex1);
+	glUniform1i(glGetUniformLocation(program, "grassUnit"), 0); // Texture unit 0
+	LoadTGATextureSimple("textures/grass.tga", &grassTex);
+
+
+	LoadTGATextureSimple("textures/sand1.tga", &sandTex);
+	glUniform1i(glGetUniformLocation(program, "sandUnit"), 1); // Texture unit 1
 	printError("program shader");
+
+	LoadTGATextureSimple("textures/forestfloor.tga", &forestTex);
+	glUniform1i(glGetUniformLocation(program, "forestUnit"), 2); // Texture unit 1
+
+
+	LoadTGATextureSimple("textures/mountain.tga", &mountainTex);
+	glUniform1i(glGetUniformLocation(program, "mountainUnit"), 3); // Texture unit 1
+
+
+	LoadTGATextureSimple("textures/snow.tga", &snowTex);
+	glUniform1i(glGetUniformLocation(program, "snowUnit"), 4); // Texture unit 1
 
 	glUseProgram(skyboxShader);
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
@@ -345,7 +360,7 @@ void init(void)
 	/*
 	glUseProgram(skyboxShader);
 	skybox = createObject("models/skybox.obj");
-	
+
 	CenterModel(skybox);
     //init_object(vertexArrayObjID, skybox, skyboxShader);
     */
@@ -354,7 +369,7 @@ void init(void)
     skyboxOffset.y = -0.2;
     skyboxOffset.z = 0;
     //glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-    
+
 
 }
 
@@ -376,28 +391,40 @@ void display(void)
 
 	updateCameraStuff();
 	mat4 total, modelView, camMatrix;
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE0, skyboxTexObjID);
 
 	glBindTexture(GL_TEXTURE_2D, skyboxTexObjID);
 	glUseProgram(skyboxShader);
 	skyboxCameraMatrix = camera.matrix;
-    skyboxCameraMatrix.m[3] = skyboxOffset.x;
-    skyboxCameraMatrix.m[4 + 3] = skyboxOffset.y;
-    skyboxCameraMatrix.m[8 + 3] = skyboxOffset.z;
+  skyboxCameraMatrix.m[3] = skyboxOffset.x;
+  skyboxCameraMatrix.m[4 + 3] = skyboxOffset.y;
+  skyboxCameraMatrix.m[8 + 3] = skyboxOffset.z;
    // glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
-	
+
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
 	DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
 	glClear(GL_DEPTH_BUFFER_BIT);
 	printError("pre display");
-	
+
 	// Build matrix
 	glUseProgram(program);
+	glActiveTexture(GL_TEXTURE0);
 	camMatrix = camera.matrix;
 	modelView = IdentityMatrix();
 	total = Mult(camMatrix, modelView);
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
 
-	glBindTexture(GL_TEXTURE_2D, tex1);		// Bind Our Texture tex1
+	glBindTexture(GL_TEXTURE_2D, grassTex);		// Bind Our Texture grassTex
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, sandTex);		// Bind Our Texture grassTex
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, forestTex);		// Bind Our Texture grassTex
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, mountainTex);		// Bind Our Texture grassTex
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, snowTex);		// Bind Our Texture grassTex
+
 	DrawModel(tm, program, "inPosition", "inNormal", "inTexCoord");
 	printError("display 1");
 
