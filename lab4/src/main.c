@@ -105,14 +105,14 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 	GLfloat *texCoordArray = malloc(sizeof(GLfloat) * 2 * vertexCount);
 	GLuint *indexArray = malloc(sizeof(GLuint) * triangleCount*3);
 
-	//printf("bpp %d\n", tex->bpp);
+
 	//printf("texture width = (%d,%f), height =(%d,%f)\n",tex->width,tex->texWidth,tex->height,tex->texHeight);
 	for (x = 0; x < tex->width; x++)
 		for (z = 0; z < tex->height; z++)
 		{
 // Vertex array. You need to scale this properly
 			vertexArray[(x + z * tex->width)*3 + 0] = x / 1.0;
-			vertexArray[(x + z * tex->width)*3 + 1] = waterLevel;
+			vertexArray[(x + z * tex->width)*3 + 1] = waterLevel + (((double) rand() / (double) RAND_MAX)-0.5)/2.0;
 			vertexArray[(x + z * tex->width)*3 + 2] = z / 1.0;
 // Normal vectors. You need to calculate these.
 			normalArray[(x + z * tex->width)*3 + 0] = 0.0;
@@ -303,7 +303,7 @@ void init(void)
 
 	// Init Camera
 	camera = newCamera();
-	camera.pos = SetVector(100,5,100);
+	camera.pos = SetVector(800,5,800);
 	camera.yaw = M_PI / 4;
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
@@ -462,7 +462,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitContextVersion(3, 2);
-	glutInitWindowSize (600, 600);
+	glutInitWindowSize (1600, 900);
 	glutCreateWindow ("TSBK07 Lab 4");
 	glutDisplayFunc(display);
 	init ();

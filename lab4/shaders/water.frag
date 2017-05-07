@@ -21,9 +21,9 @@ void main(void)
     vec3 myPosDirection = - normalize(varPos);
     float shadeSpec = pow(clamp(dot(myPosDirection, reflection), 0, 1), 50.0);
 
-    float shade = clamp(shadeAmbient + 0.5*shadeDiffuse + 0.5*shadeSpec,0,1);
+    float shade = clamp(shadeAmbient + 0.5*shadeDiffuse + 0.2*shadeSpec,0,1);
 
     
     //vec4 texColor = texture(tex, texCoord);
-    outColor = shade * vec4(133.0/255.0, 200.0/255.0, 242.0/255.0, 0.75);
+    outColor = shade * vec4(133.0/255.0, 200.0/255.0, 242.0/255.0, 0.95);
 }

@@ -15,7 +15,7 @@ uniform mat4 mdlMatrix;
 
 void main(void)
 {
-    const vec3 lightSource = normalize(vec3(-10,7,-6));
+    const vec3 lightSource = normalize(vec3(-10,4,-6));
 		mat3 normalMatrix = mat3(mdlMatrix);
 		texCoord = inTexCoord;
     varNormal = normalMatrix * inNormal;
