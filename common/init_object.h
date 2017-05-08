@@ -37,21 +37,21 @@ void init_object(GLuint vertexArrayObjID, Model * model, GLuint program){
 
            // VBO for normal data
         glBindBuffer(GL_ARRAY_BUFFER, normalBufferObjID); printError("0");
-        glBufferData(GL_ARRAY_BUFFER, 3 * model->numVertices * sizeof(GLfloat), model->normalArray, GL_STATIC_DRAW);  printError("1");
-        glVertexAttribPointer(glGetAttribLocation(program, "in_Normal"), 3, GL_FLOAT, GL_FALSE, 0, 0); printError("2");
-        glEnableVertexAttribArray(glGetAttribLocation(program, "in_Normal")); printError("3");
+        glBufferData(GL_ARRAY_BUFFER, 3 * model->numVertices * sizeof(GLfloat), model->normalArray, GL_STATIC_DRAW);  printError("1 norm");
+        glVertexAttribPointer(glGetAttribLocation(program, "in_Normal"), 3, GL_FLOAT, GL_FALSE, 0, 0); printError("2 norm");
+        glEnableVertexAttribArray(glGetAttribLocation(program, "in_Normal")); printError("3 norm");
 
         printError("normal");
         // VBO tex data
-        
+
         if (model->texCoordArray != (void *)0)
         {
             glBindBuffer(GL_ARRAY_BUFFER, texBufferObjID);
             printError("1");
             glBufferData(GL_ARRAY_BUFFER, model->numVertices*2*sizeof(GLfloat), model->texCoordArray, GL_STATIC_DRAW);
-            printError("2");
+            printError("2 tex");
             glVertexAttribPointer(glGetAttribLocation(program, "in_TexCoord"), 2, GL_FLOAT, GL_FALSE, 0, 0);
-            printError("3");
+            printError("3 tex");
             glEnableVertexAttribArray(glGetAttribLocation(program, "in_TexCoord"));
             printError("4");
         }

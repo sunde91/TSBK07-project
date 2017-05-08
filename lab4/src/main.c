@@ -11,6 +11,7 @@
 #include "loadobj.h"
 #include "LoadTGA.h"
 #include "camera.h"
+#include "init_object.h"
 
 mat4 projectionMatrix;
 
@@ -158,9 +159,9 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 Model *m, *m2, *tm, *water;
 Model * skybox;
 // Reference to shader program
-GLuint program, waterProgram;
+GLuint program, waterProgram, treeProgram;
 GLuint skyboxShader;
-GLuint grassTex, sandTex, forestTex, mountainTex,snowTex;
+GLuint grassTex, sandTex, forestTex, mountainTex,snowTex,treeTex;
 GLuint skyboxTexObjID;
 vec4 skyboxOffset;
 mat4 skyboxCameraMatrix;
@@ -171,6 +172,35 @@ TextureData waterhole;
 float mouseX, mouseY;
 float moveZ, moveX;
 Camera camera;
+
+GLfloat treePol[] ={
+	0,0,0,
+	0,10,0,
+	10,10,0,
+	10,0,0
+};
+
+GLuint indexArr[] = {
+	0,1,2,
+	0,2,3
+};
+
+GLuint normalArr[] = {
+	0,0,1,
+	0,0,1,
+	0,0,1,
+	0,0,1
+};
+
+GLfloat texCoordArr[] = {
+	0,0,
+	0,1,
+	1,1,
+	1,0
+};
+
+Model *billBoardModel;
+
 void updateKey(unsigned char event, int up)
 {
 	switch(event)
@@ -305,6 +335,23 @@ void init(void)
 	camera = newCamera();
 	camera.pos = SetVector(800,5,800);
 	camera.yaw = M_PI / 4;
+
+	billBoardModel = LoadDataToModel(
+			treePol,
+			normalArr,
+			texCoordArr,
+			NULL,
+			indexArr,
+			4,
+			6);
+			/*
+	billBoardModel->vertexArray = treePol;
+	billBoardModel->indexArray = indexArr;
+	billBoardModel->normalArray = normalArr;
+	billBoardModel->numVertices = 4;
+	billBoardModel->numIndices = 6;
+	billBoardModel->texCoordArray = texCoordArr;
+*/
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
 	glEnable(GL_DEPTH_TEST);
@@ -312,6 +359,7 @@ void init(void)
 	glEnable(GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glGenVertexArrays(1, &vertexArrayObjID);
+
 
 	printError("GL inits");
 
@@ -322,6 +370,8 @@ void init(void)
 	//ball = loadShaders("shaders/ball.vert", "shaders/ball.frag");
 	waterProgram = loadShaders("shaders/water.vert", "shaders/water.frag");
 	skyboxShader = loadShaders("shaders/skybox2.vert","shaders/skybox2.frag");
+	treeProgram = loadShaders("shaders/tree.vert","shaders/tree.frag");
+
 	glUseProgram(program);
 	printError("init shader");
 
@@ -370,7 +420,13 @@ void init(void)
     skyboxOffset.z = 0;
     //glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
+		glUseProgram(treeProgram);
+		glUniformMatrix4fv(glGetUniformLocation(treeProgram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
+		LoadTGATextureSimple("textures/tree.tga", &treeTex);
+		glUniform1i(glGetUniformLocation(treeProgram, "treeUnit"), 0);
+
+		init_object(vertexArrayObjID, billBoardModel, treeProgram);
 }
 
 void updateCameraStuff() {
@@ -440,8 +496,23 @@ void display(void)
 	DrawModel(water, waterProgram, "inPosition", "inNormal", "inTexCoord");
 	glDisable(GL_BLEND);
 
-	printError("display 2");
+	// Billboard
+	glUseProgram(treeProgram);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, treeTex);
+	mat4 t = {
+	1,0,0,camera.matrix.m[3],
+	0,1,0,camera.matrix.m[7],
+	0,0,1,camera.matrix.m[11],
+	0,0,0,1
+	};
+	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "cameraMatrix"), 1, GL_TRUE, t.m);
+	mat4 t2 = T(795, getHeightExact(tm, &ttex, 795, 795), 795);
+	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t2.m);
+	//glBindVertexArray(billBoardModel->vertexArray);
+	glDrawElements(GL_TRIANGLES, billBoardModel->numIndices, GL_UNSIGNED_INT, 0L);
 
+	printError("display 2");
 	glutSwapBuffers();
 }
 
