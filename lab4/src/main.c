@@ -174,9 +174,9 @@ float moveZ, moveX;
 Camera camera;
 
 GLfloat treePol[] ={
-	0,0,0,
-	0,10,0,
-	10,10,0,
+	-10,0,0,
+	-10,30,0,
+	10,30,0,
 	10,0,0
 };
 
@@ -193,10 +193,10 @@ GLuint normalArr[] = {
 };
 
 GLfloat texCoordArr[] = {
-	0,0,
 	0,1,
-	1,1,
-	1,0
+	0,0,
+	1,0,
+	1,1
 };
 
 Model *billBoardModel;
@@ -334,7 +334,7 @@ void init(void)
 	// Init Camera
 	camera = newCamera();
 	camera.pos = SetVector(800,5,800);
-	camera.yaw = M_PI / 4;
+	camera.yaw = M_PI /2;
 
 	billBoardModel = LoadDataToModel(
 			treePol,
@@ -420,13 +420,15 @@ void init(void)
     skyboxOffset.z = 0;
     //glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-		glUseProgram(treeProgram);
-		glUniformMatrix4fv(glGetUniformLocation(treeProgram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUseProgram(treeProgram);
+	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
-		LoadTGATextureSimple("textures/tree.tga", &treeTex);
-		glUniform1i(glGetUniformLocation(treeProgram, "treeUnit"), 0);
+	LoadTGATextureSimple("textures/tree.tga", &treeTex);
+	glUniform1i(glGetUniformLocation(treeProgram, "treeUnit"), 0);
 
-		init_object(vertexArrayObjID, billBoardModel, treeProgram);
+
+	init_object(vertexArrayObjID, billBoardModel, treeProgram);
+	CenterModel(billBoardModel);
 }
 
 void updateCameraStuff() {
@@ -500,18 +502,17 @@ void display(void)
 	glUseProgram(treeProgram);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, treeTex);
-	mat4 t = {
-	1,0,0,camera.matrix.m[3],
-	0,1,0,camera.matrix.m[7],
-	0,0,1,camera.matrix.m[11],
-	0,0,0,1
-	};
-	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "cameraMatrix"), 1, GL_TRUE, t.m);
-	mat4 t2 = T(795, getHeightExact(tm, &ttex, 795, 795), 795);
-	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t2.m);
+	
+	float y = getHeightExact(tm, &ttex, 820,810);
+	mat4 t = T(820,y,810);
+	t = Mult(camera.matrix,t);
+	t = T(t.m[3],t.m[7],t.m[11]);
+	glEnable(GL_BLEND);
+	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t.m);
 	//glBindVertexArray(billBoardModel->vertexArray);
-	glDrawElements(GL_TRIANGLES, billBoardModel->numIndices, GL_UNSIGNED_INT, 0L);
-
+	DrawModel(billBoardModel,treeProgram,"in_Position","in_Normal", "in_TexCoord");
+	//glDrawElements(GL_TRIANGLES, billBoardModel->numIndices, GL_UNSIGNED_INT, 0L);
+	glDisable(GL_BLEND);
 	printError("display 2");
 	glutSwapBuffers();
 }

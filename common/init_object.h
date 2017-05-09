@@ -35,6 +35,7 @@ void init_object(GLuint vertexArrayObjID, Model * model, GLuint program){
 
         printError("index");
 
+        /*
            // VBO for normal data
         glBindBuffer(GL_ARRAY_BUFFER, normalBufferObjID); printError("0");
         glBufferData(GL_ARRAY_BUFFER, 3 * model->numVertices * sizeof(GLfloat), model->normalArray, GL_STATIC_DRAW);  printError("1 norm");
@@ -43,17 +44,17 @@ void init_object(GLuint vertexArrayObjID, Model * model, GLuint program){
 
         printError("normal");
         // VBO tex data
-
+        */
         if (model->texCoordArray != (void *)0)
         {
             glBindBuffer(GL_ARRAY_BUFFER, texBufferObjID);
-            printError("1");
+            printError("1 tex");
             glBufferData(GL_ARRAY_BUFFER, model->numVertices*2*sizeof(GLfloat), model->texCoordArray, GL_STATIC_DRAW);
             printError("2 tex");
             glVertexAttribPointer(glGetAttribLocation(program, "in_TexCoord"), 2, GL_FLOAT, GL_FALSE, 0, 0);
             printError("3 tex");
             glEnableVertexAttribArray(glGetAttribLocation(program, "in_TexCoord"));
-            printError("4");
+            printError("4 tex");
         }
         else {
             printf("no texture coordinates found\n");
