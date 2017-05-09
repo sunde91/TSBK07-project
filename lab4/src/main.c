@@ -154,6 +154,10 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 	return model;
 }
 
+unsigned int nr_of_trees = 1000;
+GLfloat *treePos; 
+int *tree_tex;
+
 
 // vertex array object
 Model *m, *m2, *tm, *water;
@@ -161,7 +165,8 @@ Model * skybox;
 // Reference to shader program
 GLuint program, waterProgram, treeProgram;
 GLuint skyboxShader;
-GLuint grassTex, sandTex, forestTex, mountainTex,snowTex,treeTex;
+GLuint grassTex, sandTex, forestTex, mountainTex,snowTex;
+GLuint treeTex, treeTex2, treeTex3, treeTex4;
 GLuint skyboxTexObjID;
 vec4 skyboxOffset;
 mat4 skyboxCameraMatrix;
@@ -344,14 +349,15 @@ void init(void)
 			indexArr,
 			4,
 			6);
-			/*
-	billBoardModel->vertexArray = treePol;
-	billBoardModel->indexArray = indexArr;
-	billBoardModel->normalArray = normalArr;
-	billBoardModel->numVertices = 4;
-	billBoardModel->numIndices = 6;
-	billBoardModel->texCoordArray = texCoordArr;
-*/
+	int i;
+	treePos = malloc(sizeof(GLfloat) * 2 * nr_of_trees);
+	tree_tex = malloc(sizeof(int) * nr_of_trees);
+	for (i = 0; i < nr_of_trees; i++){
+		treePos[i*2 + 0] = ((double) rand() / (double) RAND_MAX)*510.0 + 513.0;
+		treePos[i*2 + 1] = ((double) rand() / (double) RAND_MAX)*510.0 + 1.0;
+		tree_tex[i] = rand() % 4;
+	}
+
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
 	glEnable(GL_DEPTH_TEST);
@@ -424,6 +430,9 @@ void init(void)
 	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
 	LoadTGATextureSimple("textures/tree.tga", &treeTex);
+	LoadTGATextureSimple("textures/tree2.tga", &treeTex2);
+	LoadTGATextureSimple("textures/tree3.tga", &treeTex3);
+	LoadTGATextureSimple("textures/tree4.tga", &treeTex4);
 	glUniform1i(glGetUniformLocation(treeProgram, "treeUnit"), 0);
 
 
@@ -440,6 +449,16 @@ void updateCameraStuff() {
 	cameraSetTargetY(&camera, 5.0 + currentHeight);
 	//printf("camera pos = %f,%f,%f\n",camera.pos.x,camera.pos.y, camera.pos.z);
 	updateCamera(&camera);
+}
+
+GLuint get_tree_tex(int i){
+	int j = tree_tex[i];
+	switch(j){
+		case 0: return treeTex;
+		case 1: return treeTex2;
+		case 2: return treeTex3;
+		case 3: return treeTex4;
+	}
 }
 
 void display(void)
@@ -501,18 +520,26 @@ void display(void)
 	// Billboard
 	glUseProgram(treeProgram);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, treeTex);
 	
-	float y = getHeightExact(tm, &ttex, 820,810);
-	mat4 t = T(820,y,810);
-	t = Mult(camera.matrix,t);
-	t = T(t.m[3],t.m[7],t.m[11]);
-	glEnable(GL_BLEND);
-	glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t.m);
-	//glBindVertexArray(billBoardModel->vertexArray);
-	DrawModel(billBoardModel,treeProgram,"in_Position","in_Normal", "in_TexCoord");
-	//glDrawElements(GL_TRIANGLES, billBoardModel->numIndices, GL_UNSIGNED_INT, 0L);
-	glDisable(GL_BLEND);
+	
+	int i;
+	for (i = 0; i < nr_of_trees; i++){
+		GLfloat x = treePos[i*2 + 0]; 
+		GLfloat z = treePos[i*2 + 1];
+		float y = getHeightExact(tm, &ttex, x,z);
+		if( y > 60 )
+			continue;
+		mat4 t = T(x,y,z);
+		t = Mult(camera.matrix,t);
+		t = T(t.m[3],t.m[7],t.m[11]);
+
+		GLuint TEX = get_tree_tex(i);
+		glBindTexture(GL_TEXTURE_2D, TEX);
+		
+		glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t.m);
+		//glBindVertexArray(billBoardModel->vertexArray);
+		DrawModel(billBoardModel,treeProgram,"in_Position","in_Normal", "in_TexCoord");
+	}
 	printError("display 2");
 	glutSwapBuffers();
 }
@@ -523,11 +550,7 @@ void timer(int i)
 	glutPostRedisplay();
 }
 
-/*
-void mouse(int x, int y)
-{
-	printf("%d %d\n", x, y);
-}*/
+
 
 int main(int argc, char **argv)
 {

@@ -8,6 +8,11 @@ uniform sampler2D treeUnit;
 
 void main(void)
 {
-	outColor = texture(treeUnit, texCoord);
+	
+	vec4 texel = texture(treeUnit, texCoord);
+	if(texel.a < 0.5)
+    	discard;
+	outColor = texel;
+
 
 }
