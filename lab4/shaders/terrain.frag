@@ -11,6 +11,7 @@ uniform sampler2D sandUnit;
 uniform sampler2D forestUnit;
 uniform sampler2D mountainUnit;
 uniform sampler2D snowUnit;
+uniform sampler2D savannhUnit;
 void main(void)
 {
 
@@ -40,6 +41,8 @@ void main(void)
 
 		float f = sin((x+z)/3.14)*10;
 		vec4 texColor;
+
+
 		if(outPosition.y > 5){
 			if(outPosition.x >= 467 && outPosition.x <= 557 && outPosition.z >= 467 && outPosition.z <= 557){
 				vec4 v;
@@ -59,19 +62,19 @@ void main(void)
 				v.z /= sum;
 				v.w /= sum;
 
-				texColor = v.x * texture(grassUnit, texCoord) + v.y * texture(forestUnit, texCoord) + v.z * texture(sandUnit, texCoord) + v.w * texture(grassUnit, texCoord);
+				texColor = v.x * texture(grassUnit, texCoord) + v.y * texture(forestUnit, texCoord) + v.z * texture(sandUnit, texCoord) + v.w * texture(savannhUnit, texCoord);
 			}
 			else if(x >= 467 && x <= 557 && z < 512){
 				texColor = (x-467)/90 * texture(forestUnit, texCoord) + (557-x)/90 * texture(grassUnit, texCoord);
 			}
 			else if(x >= 467 && x <= 557 && z > 512){
-				texColor = (x-467)/90 * texture(grassUnit, texCoord) + (557-x)/90 * texture(sandUnit, texCoord);
+				texColor = (x-467)/90 * texture(savannhUnit, texCoord) + (557-x)/90 * texture(sandUnit, texCoord);
 			}
 			else if(z >= 467 && z <= 557 && x < 512){
 				texColor = (z-467)/90 * texture(sandUnit, texCoord) + (557-z)/90 * texture(grassUnit, texCoord);
 			}
 			else if(z >= 467 && z <= 557 && x > 512){
-				texColor = (z-467)/90 * texture(grassUnit, texCoord) + (557-z)/90 * texture(forestUnit, texCoord);
+				texColor = (z-467)/90 * texture(savannhUnit, texCoord) + (557-z)/90 * texture(forestUnit, texCoord);
 			}
 			else if(outPosition.x < 512 && outPosition.z > 512){
 				texColor = texture(sandUnit, texCoord);
@@ -93,13 +96,27 @@ void main(void)
 			else if(outPosition.y > 100){
 				texColor = texture(mountainUnit, texCoord);
 			}
-			else{
+			else if(x < 512 && z < 512){
 				texColor = texture(grassUnit, texCoord);
 			}
+			else{
+				texColor = texture(savannhUnit, texCoord);
+			}
 		}
-		else if(outPosition.y > 4 && outPosition.y < 5){
-			//vec4 texColor1;
-			vec4 texColor1 = (outPosition.y-4)*texture(grassUnit, texCoord);
+		else if(outPosition.y >= 4 && outPosition.y <= 5){
+			vec4 texColor1;
+			if(x <= 512 && z <= 512){
+			 	texColor1 = (outPosition.y-4)*texture(grassUnit, texCoord);
+			}
+			else if(x > 512 && z <= 512){
+				texColor1 = (outPosition.y-4)*texture(forestUnit, texCoord);
+			}
+			else if(x <= 512 && z > 512){
+				texColor1 = (outPosition.y-4)*texture(sandUnit, texCoord);
+			}
+			else{
+				texColor1 = (outPosition.y-4)*texture(savannhUnit, texCoord);
+			}
 			vec4 texColor2 = (5-outPosition.y)*texture(sandUnit, texCoord);
 			texColor = texColor1 + texColor2;
 		}

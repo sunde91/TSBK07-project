@@ -3,7 +3,7 @@
 
 #include "VectorUtils3.h"
 
-typedef struct 
+typedef struct
 {
     vec3 pos, vel;
     GLfloat speed;
@@ -16,7 +16,7 @@ typedef struct
     mat4 matrix;
 } Camera;
 
-Camera newCamera(void) 
+Camera newCamera(void)
 {
     Camera camera;
     camera.pos = SetVector(0,5,30);
@@ -40,7 +40,7 @@ mat4 matFromAngles(GLfloat pitch, GLfloat yaw)
     mat4 rotx = Rx(pitch);
     mat4 roty = Ry(yaw);
     mat4 rot = Mult(rotx, roty);
-    return rot; 
+    return rot;
 }
 
 // Does not work?
@@ -65,7 +65,7 @@ void cameraLookAt(Camera * cam, vec3 dir)
     cam->matrix = lookAtv(cam->pos, at, SetVector(0,1,0));
 }
 
-void printCam(Camera * cam) 
+void printCam(Camera * cam)
 {
     int i,j;
     for(i = 0; i < 4; ++i)
@@ -77,11 +77,23 @@ void printCam(Camera * cam)
     printf("\n");
 }
 
-void updateCamera(Camera * camera) 
+void updateCamera(Camera * camera)
 {
     //vec3 dir = vecFromAngles(camera->pitch, camera->yaw);
     //camera->matrix = lookAtv(camera->pos, dir, camera->up);
     camera->pos = VectorAdd(camera->pos, camera->vel);
+		if(camera->pos.x < 0){
+			camera->pos.x = 0;
+		}
+		if(camera->pos.x > 1023){
+			camera->pos.x = 1023;
+		}
+		if(camera->pos.z < 0){
+			camera->pos.z = 0;
+		}
+		if(camera->pos.z > 1023){
+			camera->pos.z = 1023;
+		}
     camera->pitch += camera->pitchSpeed;
     camera->yaw += camera->yawSpeed;
     mat4 R = matFromAngles(camera->pitch, camera->yaw);
@@ -99,9 +111,9 @@ void cameraSetRotateVel(Camera * camera, GLfloat v_pitch, GLfloat v_yaw)
 {
     v_pitch *= camera->rotSpeed;
     v_yaw *= camera->rotSpeed;
-    if(v_pitch < 0 && camera->pitch <= (-M_PI/2+0.05)) 
+    if(v_pitch < 0 && camera->pitch <= (-M_PI/2+0.05))
         camera->pitchSpeed = 0;
-    else if(v_pitch > 0 && camera->pitch >= (M_PI/2+0.05)) 
+    else if(v_pitch > 0 && camera->pitch >= (M_PI/2+0.05))
         camera->pitchSpeed = 0;
     else if( fabs(v_pitch) > camera->rotThresh )
         camera->pitchSpeed = v_pitch;

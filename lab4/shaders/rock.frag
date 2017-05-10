@@ -6,11 +6,13 @@ in vec3 varNormal;
 in vec3 varLight;
 in vec3 varPos;
 
+
 uniform sampler2D tex;
 void main(void)
 {
 
 	//outColor = texture(tex, texCoord);
+
 
     vec3 normal = normalize(varNormal);
     vec3 light = normalize(varLight);
@@ -33,6 +35,11 @@ void main(void)
         + lightColor[i].r * ( tex_Color0 + tex_Color1  );
     tex_Color /= 4;
     */
+
     vec4 texColor = texture(tex, texCoord);
-    outColor = shade * vec4(1.0);
+		//if(vec3(texColor) == vec3 (0,0,0)){
+		if(texColor.x < 40.0/255.0){
+			discard;
+		}
+		outColor = shade * texColor;
 }

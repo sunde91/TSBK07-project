@@ -8,6 +8,7 @@ out vec3 varNormal;
 out vec3 varLight;
 out vec3 varPos;
 
+
 // NY
 uniform mat4 projMatrix;
 uniform mat4 mdlMatrix;

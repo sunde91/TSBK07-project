@@ -155,18 +155,22 @@ Model * GenerateWater(TextureData *tex, float waterLevel)
 }
 
 unsigned int nr_of_trees = 1000;
-GLfloat *treePos; 
+GLfloat *treePos;
 int *tree_tex;
 
+unsigned int nr_of_rocks = 15;
+GLfloat *rockPos;
+int *rockScale;
 
 // vertex array object
-Model *m, *m2, *tm, *water;
+Model *m, *m2, *tm, *water, *rock;
 Model * skybox;
 // Reference to shader program
-GLuint program, waterProgram, treeProgram;
+GLuint program, waterProgram, treeProgram, rockShader;
 GLuint skyboxShader;
-GLuint grassTex, sandTex, forestTex, mountainTex,snowTex;
+GLuint grassTex, sandTex, forestTex, mountainTex,snowTex,savannhTex;
 GLuint treeTex, treeTex2, treeTex3, treeTex4;
+GLuint rockTex;
 GLuint skyboxTexObjID;
 vec4 skyboxOffset;
 mat4 skyboxCameraMatrix;
@@ -358,6 +362,16 @@ void init(void)
 		tree_tex[i] = rand() % 4;
 	}
 
+	rockPos = malloc(sizeof(GLfloat) * 2 * nr_of_rocks);
+	rockScale = malloc(sizeof(GLfloat) * nr_of_rocks);
+	for (i = 0; i < nr_of_rocks; i++){
+		rockPos[i*2 + 0] = ((double) rand() / (double) RAND_MAX)*510.0 + 513.0;
+		rockPos[i*2 + 1] = ((double) rand() / (double) RAND_MAX)*510.0 + 513.0;
+
+		rockScale[i] = ((double) rand() / (double) RAND_MAX)*6.0 + 1;
+	}
+
+
 	// GL inits
 	glClearColor(0.2,0.2,0.5,0);
 	glEnable(GL_DEPTH_TEST);
@@ -373,7 +387,7 @@ void init(void)
 
 	// Load and compile shader
 	program = loadShaders("shaders/terrain.vert", "shaders/terrain.frag");
-	//ball = loadShaders("shaders/ball.vert", "shaders/ball.frag");
+	rockShader = loadShaders("shaders/rock.vert", "shaders/rock.frag");
 	waterProgram = loadShaders("shaders/water.vert", "shaders/water.frag");
 	skyboxShader = loadShaders("shaders/skybox2.vert","shaders/skybox2.frag");
 	treeProgram = loadShaders("shaders/tree.vert","shaders/tree.frag");
@@ -401,10 +415,26 @@ void init(void)
 	LoadTGATextureSimple("textures/snow.tga", &snowTex);
 	glUniform1i(glGetUniformLocation(program, "snowUnit"), 4); // Texture unit 1
 
+
+	LoadTGATextureSimple("textures/savannh.tga", &savannhTex);
+	glUniform1i(glGetUniformLocation(program, "savannhUnit"), 5); // Texture unit 1
+
+
+
+
 	glUseProgram(skyboxShader);
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	m2 = createObject("models/skybox.obj");
 	CenterModel(m2);
+
+	glUseProgram(rockShader);
+	glUniformMatrix4fv(glGetUniformLocation(rockShader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	rock = createObject("models/rock.obj");
+	CenterModel(rock);
+	LoadTGATextureSimple("textures/rock.tga", &rockTex);
+	glUniform1i(glGetUniformLocation(rockShader, "tex"), 0);
+
+
 
 	//glUniform1i(glGetUniformLocation(ball, "tex"), 0); // Texture unit 0
 	printError("ball shader");
@@ -484,6 +514,7 @@ void display(void)
 	glClear(GL_DEPTH_BUFFER_BIT);
 	printError("pre display");
 
+
 	// Build matrix
 	glUseProgram(program);
 	glActiveTexture(GL_TEXTURE0);
@@ -501,11 +532,33 @@ void display(void)
 	glBindTexture(GL_TEXTURE_2D, mountainTex);		// Bind Our Texture grassTex
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, snowTex);		// Bind Our Texture grassTex
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, savannhTex);		// Bind Our Texture grassTex
 
 	DrawModel(tm, program, "inPosition", "inNormal", "inTexCoord");
 	printError("display 1");
 
+	glUseProgram(rockShader);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, rockTex);
 
+	int i;
+	float scale;
+	for (i = 0; i < nr_of_rocks; i++){
+		GLfloat x = rockPos[i*2 + 0];
+		GLfloat z = rockPos[i*2 + 1];
+		scale = rockScale[i];
+	float y = getHeightExact(tm, &ttex, x,z);
+	if(y < 5){
+		continue;
+	}
+
+	modelView = Mult(T(x,y,z), S(scale,scale,scale));
+	total = Mult(camMatrix, modelView); // Mult(camMatrix, modelView);
+	//GLfloat gly = y;
+	glUniformMatrix4fv(glGetUniformLocation(rockShader, "mdlMatrix"), 1, GL_TRUE, total.m);
+	DrawModel(rock,rockShader,"inPosition", "inNormal", "inTexCoord");
+	}
 
 	// draw water
 	glUseProgram(waterProgram);
@@ -520,11 +573,11 @@ void display(void)
 	// Billboard
 	glUseProgram(treeProgram);
 	glActiveTexture(GL_TEXTURE0);
-	
-	
-	int i;
+
+
+
 	for (i = 0; i < nr_of_trees; i++){
-		GLfloat x = treePos[i*2 + 0]; 
+		GLfloat x = treePos[i*2 + 0];
 		GLfloat z = treePos[i*2 + 1];
 		float y = getHeightExact(tm, &ttex, x,z);
 		if( y > 60 )
@@ -535,7 +588,7 @@ void display(void)
 
 		GLuint TEX = get_tree_tex(i);
 		glBindTexture(GL_TEXTURE_2D, TEX);
-		
+
 		glUniformMatrix4fv(glGetUniformLocation(treeProgram, "modelMatrix"), 1, GL_TRUE, t.m);
 		//glBindVertexArray(billBoardModel->vertexArray);
 		DrawModel(billBoardModel,treeProgram,"in_Position","in_Normal", "in_TexCoord");
