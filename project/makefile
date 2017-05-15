@@ -25,14 +25,7 @@ COMPILE = gcc -w
 PROGRAMS = main
 all : $(PROGRAMS)
 
-lab4-1 : src/lab4-1.c $(DEPS)
-	$(COMPILE) -o $@ $(INCLUDE) $(FLAGS) $< $(DEPS) $(LIBS)
-lab4-2 : src/lab4-2.c $(DEPS)
-	$(COMPILE) -o $@ $(INCLUDE) $(FLAGS) $< $(DEPS) $(LIBS)
-lab4-3 : src/lab4-3.c $(DEPS)
-	$(COMPILE) -o $@ $(INCLUDE) $(FLAGS) $< $(DEPS) $(LIBS)
-lab4-4 : src/lab4-4.c $(DEPS)
-	$(COMPILE) -o $@ $(INCLUDE) $(FLAGS) $< $(DEPS) $(LIBS)
+
 main : src/main.c $(DEPS)
 	$(COMPILE) -o $@ $(INCLUDE) $(FLAGS) $< $(DEPS) $(LIBS)
 
