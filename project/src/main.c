@@ -502,10 +502,10 @@ void display(void)
 	glBindTexture(GL_TEXTURE_2D, skyboxTexObjID);
 	glUseProgram(skyboxShader);
 	skyboxCameraMatrix = camera.matrix;
-  skyboxCameraMatrix.m[3] = skyboxOffset.x;
-  skyboxCameraMatrix.m[4 + 3] = skyboxOffset.y;
-  skyboxCameraMatrix.m[8 + 3] = skyboxOffset.z;
-   // glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
+	skyboxCameraMatrix.m[3] = skyboxOffset.x;
+	skyboxCameraMatrix.m[4 + 3] = skyboxOffset.y;
+	skyboxCameraMatrix.m[8 + 3] = skyboxOffset.z;
+   
 
 	glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "cameraMatrix"), 1, GL_TRUE, skyboxCameraMatrix.m);
 	DrawModel(m2,program,"inPosition", "inNormal", "inTexCoord");
@@ -521,17 +521,17 @@ void display(void)
 	total = Mult(camMatrix, modelView);
 	glUniformMatrix4fv(glGetUniformLocation(program, "mdlMatrix"), 1, GL_TRUE, total.m);
 
-	glBindTexture(GL_TEXTURE_2D, grassTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, grassTex);		
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, sandTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, sandTex);		
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, forestTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, forestTex);		
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, mountainTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, mountainTex);		
 	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, snowTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, snowTex);		
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, savannhTex);		// Bind Our Texture grassTex
+	glBindTexture(GL_TEXTURE_2D, savannhTex);		
 
 	DrawModel(tm, program, "inPosition", "inNormal", "inTexCoord");
 	printError("display 1");
@@ -582,7 +582,7 @@ void display(void)
 			continue;
 		mat4 t = T(x,y,z);
 		t = Mult(camera.matrix,t);
-		t = T(t.m[3],t.m[7],t.m[11]);
+		t = Mult(T(t.m[3],t.m[7],t.m[11]),Rx(camera.pitch));
 
 		GLuint TEX = get_tree_tex(i);
 		glBindTexture(GL_TEXTURE_2D, TEX);
